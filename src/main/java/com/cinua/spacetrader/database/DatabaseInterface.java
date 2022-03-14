@@ -14,6 +14,8 @@ public class DatabaseInterface{
     public static final boolean singleplayer = false;
     public static final boolean multiplayer = true;
 
+    public static int singleplayerAccountId = 1;
+
     public static final int noPlayer = 0;
 
     private Connection database;
@@ -65,21 +67,22 @@ public class DatabaseInterface{
     public int authenticate(String name, String password) throws SQLException{
         String command = String.format("SELECT accounts.id FROM accounts, players WHERE accounts.id = players.id AND Name='%s' AND password='%s';", name, password);
         ResultSet account = database.createStatement().executeQuery(command);
-        while(account.next()){
-            return account.getInt(1);
-        }
-        return noPlayer;
+        return account.next() ? account.getInt(1) : noPlayer;
     }
 
     public int register(String name, String password) throws SQLException{
         database.setAutoCommit(false);
-        String command = "INSERT INTO accounts(password) VALUES('" + password + "');";
-        PreparedStatement statement = database.prepareStatement(command, Statement.RETURN_GENERATED_KEYS);
-        statement.execute();
-        ResultSet keys = statement.getGeneratedKeys();
-        int accountId = 0;
-        while(keys.next()){
+        int accountId = noPlayer;
+        String command;
+        if(password != null && !password.equals("")){
+            command = "INSERT INTO accounts(password) VALUES('" + password + "');";
+            PreparedStatement statement = database.prepareStatement(command, Statement.RETURN_GENERATED_KEYS);
+            statement.execute();
+            ResultSet keys = statement.getGeneratedKeys();
+            keys.next();
             accountId = keys.getInt(1);
+        }else{
+            accountId = singleplayerAccountId;
         }
         try{
             command = String.format("INSERT INTO Players(id, Name) VALUES(%d,'%s');", accountId, name);
@@ -93,9 +96,12 @@ public class DatabaseInterface{
         database.commit();
         return accountId;
     }
+
     public Player getPlayerById(int id) throws SQLException{
         ResultSet playerTable = database.createStatement().executeQuery("SELECT Capital, Capacity, Consumption FROM Players, Ships WHERE Ships.id = Players.id AND Players.id = " + id + ";");
-        Player player = new Player(new Ship(playerTable.getInt(2),playerTable.getInt(3)),playerTable.getInt(1));
+        Player player = null;
+        playerTable.next();
+        player = new Player(new Ship(playerTable.getInt(2), playerTable.getInt(3)), playerTable.getInt(1));
         playerTable.close();
         return player;
     }
@@ -110,7 +116,7 @@ public class DatabaseInterface{
         return statement.getGeneratedKeys().getInt(1);
     }
 
-    public void setPlayer(Player player) throws SQLException{
+    public void setPlayer(Player player) throws SQLException{ // Not to be used in production;
         database.setAutoCommit(false);
         int newShipKey = setShip(player.getShip());
         database.createStatement().execute("DELETE FROM Players;");

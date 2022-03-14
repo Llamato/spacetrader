@@ -6,14 +6,12 @@ import com.cinua.spacetrader.gameplay.Ship;
 import com.glabs.tables.SimpleTable;
 import com.cinua.spacetrader.gameplay.Cargo;
 import com.cinua.spacetrader.gameplay.planet.Port;
-
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
-public class Tests {
+public class Tests{
 
     //Test data integrity
     static SimpleTable getPortTable(Port[] ports) {
@@ -37,7 +35,7 @@ public class Tests {
     }
 
     //Test distance calculation algorithm
-    static SimpleTable getDistanceTable(Port[] ports) {
+    static SimpleTable getDistanceTable(Port[] ports){
         SimpleTable table = new SimpleTable(3, new String[]{"Origin", "Destination", "Distance"});
         for (Port origin : ports) {
             for (Port destination : ports) {
@@ -50,7 +48,7 @@ public class Tests {
     }
 
     static SimpleTable getCargoTableFromDatabase(String file) {
-        try {
+        try{
             DatabaseInterface database = DatabaseInterface.connect(file, DatabaseInterface.singleplayer);
             SimpleTable table = new SimpleTable(3, new String[]{"Name", "Capacity", "BasePrice"});
             Cargo[] cargos = database.getCargos();
@@ -60,18 +58,18 @@ public class Tests {
                 table.append(cargo.getBasePrice());
             }
             return table;
-        } catch (SQLException e) {
+        }catch(SQLException e){
             e.printStackTrace();
             return null;
         }
     }
 
-    static void printShip(Ship ship) {
+    static void printShip(Ship ship){
         System.out.printf("%s:\t%d\n", "Capacity", ship.getCapacity());
         System.out.printf("%s:\t%d\n", "Consumption", ship.getConsumption());
     }
 
-    static void printPlayer(Player player) {
+    static void printPlayer(Player player){
         System.out.println("Ship:");
         printShip(player.getShip());
         System.out.println("Player:");
@@ -79,7 +77,7 @@ public class Tests {
 
     }
 
-    static Player getPlayerFromDatabase(String file) {
+    static Player getPlayerFromDatabase(String file){
         try {
             DatabaseInterface database = DatabaseInterface.connect(file, DatabaseInterface.singleplayer);
             Player player = database.getPlayerById(1);
@@ -90,7 +88,7 @@ public class Tests {
         }
     }
 
-    static void writePlayerToDatabase(String file, Player player) {
+    static void writePlayerToDatabase(String file, Player player){
         try {
             DatabaseInterface database = DatabaseInterface.connect(file, DatabaseInterface.singleplayer);
             database.setPlayer(player);
@@ -99,7 +97,7 @@ public class Tests {
         }
     }
 
-    static void writeCargosToDatabase(String file, Cargo[] cargos) {
+    static void writeCargosToDatabase(String file, Cargo[] cargos){
         try {
             DatabaseInterface database = DatabaseInterface.connect(file, DatabaseInterface.singleplayer);
             database.setCargos(cargos);
@@ -108,7 +106,7 @@ public class Tests {
         }
     }
 
-    static void registerAccount(String url, String name, String password) {
+    static void registerAccount(String url, String name, String password){
         try {
             DatabaseInterface database = DatabaseInterface.connect(url, DatabaseInterface.multiplayer);
             database.register(name, password);
@@ -117,7 +115,7 @@ public class Tests {
         }
     }
 
-    static int authenticator(String url, String name, String password) {
+    static int authenticator(String url, String name, String password){
         try {
             DatabaseInterface database = DatabaseInterface.connect(url, DatabaseInterface.multiplayer);
             return database.authenticate(name, password);
@@ -127,20 +125,20 @@ public class Tests {
         return DatabaseInterface.noPlayer;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args){
         GameData testGame = new GameData();
         printTable(getPortTable(testGame.ports)); //Test data integrity
-        printTable(getDistanceTable(testGame.ports)); //Test distance calculation algorithm*/
-        printTable(getCargoTableFromDatabase("template/newgame.sqlite"));
-        printPlayer(getPlayerFromDatabase("template/newgame.sqlite"));
-        //writePlayerToDatabase("saves/Hund/Hund.sqlite", getPlayerFromDatabase("template/newgame.sqlite"));
+        printTable(getDistanceTable(testGame.ports)); //Test distance calculation algorithm
+        printTable(getCargoTableFromDatabase("template/newgame.sqlite")); //Test local database connection
+        printPlayer(getPlayerFromDatabase("template/newgame.sqlite")); //Test local database connection
 
-        registerAccount("127.0.0.1", "Tina","123456");
-        registerAccount("127.0.0.1", "Ousan", "123456");
+        registerAccount("127.0.0.1", "Tina","123456"); //Test remote account registration
+        registerAccount("127.0.0.1", "Ousan", "123456"); //Test remote account registration
 
-        System.out.println("Logged in as user with id " + authenticator("127.0.0.1", "Tina", "123456"));
-        System.out.println("Logged in as user with id " + authenticator("127.0.0.1", "Tom", "123456"));
-        System.out.println("Logged in as user with id " + authenticator("127.0.0.1", "Ousan", "123456"));
+        System.out.println("Logged in as user with id " + authenticator("127.0.0.1", "Tina", "123456")); //Test account authentication
+        System.out.println("Logged in as user with id " + authenticator("127.0.0.1", "Tom", "123456")); //Test account authentication
+        System.out.println("Logged in as user with id " + authenticator("127.0.0.1", "Ousan", "123456")); //Test account authentication
+
     }
 }
 

@@ -38,42 +38,41 @@ public class Console{
                     selectedIndex = Arrays.binarySearch(menuItems, selection);
                 }
                 Savegame game = null;
-                switch(selectedIndex){
-                    case 0:
+                switch (selectedIndex) {
+                    case 0 -> {
                         game = new MultiplayerGame(input("Please enter the url of the server you would like to join "));
                         String username = input("Username? ");
                         String password = input("Password? ");
                         game.login(username, password);
-                        if(game.loggedIn()){
-                            System.out.println("Logged in "); //Debug!!!
-                        }else{
+                        if (game.loggedIn()) {
+                            System.out.println("Logged in"); //Debug!!!
+                            game.load();
+                        } else {
                             System.out.println("Username or password wrong.");
                             String response = input("Would you like to create an account with that name and password? [Yes/no] ").toLowerCase(Locale.ROOT);
-                            if(response.equals("no")){
+                            if (response.equals("no")) {
                                 System.exit(0);
-                            }else if(response.equals("yes") || response.equals("y") || response.equals("")){
+                            } else if (response.equals("yes") || response.equals("y") || response.equals("")) {
                                 game.create(username, password);
                             }
                         }
-                        break;
-                    case 1:
+                    }
+                    case 1 -> {
                         String name = input("Please enter a name for the new game ");
-                        SingleplayerGame.newGame(name);
                         game = new SingleplayerGame(name);
-                        game.load();
-                        break;
-                    case 2:
-                        Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator)+1)));
+                        game.create("", "");
+                    }
+                    case 2 -> {
+                        Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator) + 1)));
                         game = new SingleplayerGame(input("Please enter the name of the game you would like to load "));
+                        game.login("", "");
                         game.load();
-                        break;
-                    case 3:
-                        Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator)+1)));
+                    }
+                    case 3 -> {
+                        Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator) + 1)));
                         SingleplayerGame.delete(input("Please enter the name of the game you would like to delete "));
-                        break;
-                    case 4:
-                        System.exit(0);
-                        break;
+                    }
+                    case 4 -> System.exit(0);
                 }
                 gameplayLoop(game);
             }catch(IOException e){
