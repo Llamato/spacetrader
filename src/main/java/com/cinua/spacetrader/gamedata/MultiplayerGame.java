@@ -1,15 +1,40 @@
 package com.cinua.spacetrader.gamedata;
-import com.cinua.spacetrader.gameplay.Cargo;
-import com.cinua.spacetrader.gameplay.Player;
-import com.cinua.spacetrader.gameplay.planet.Port;
+import com.cinua.spacetrader.database.DatabaseInterface;
+import java.sql.SQLException;
 
-public class MultiplayerGame extends GameData {
+public class MultiplayerGame extends Savegame{
+    private int playerId = DatabaseInterface.noPlayer;
 
-    public MultiplayerGame(Cargo[] items, Port[] ports, Player player) {
-        super(items, ports, player);
+    public MultiplayerGame(String url) throws SQLException{
+        super(url);
+        database = DatabaseInterface.connect(gameLocation, DatabaseInterface.multiplayer);
     }
 
-    public static GameData load(String gameIdentifier) {
-        return null;
+    @Override
+    public boolean loggedIn(){
+        return playerId != DatabaseInterface.noPlayer;
+    }
+
+    @Override
+    public int create(String name, String password) throws SQLException{
+        playerId = database.register(name, password);
+        return playerId;
+    }
+
+    @Override
+    public GameData load() throws SQLException{
+        return new GameData(database.getCargos(), database.getPorts(), database.getPlayerById(playerId));
+    }
+
+    @Override
+    public void login(String name, String password) throws SQLException{
+        playerId = database.authenticate(name,password);
+        data = load();
+    }
+
+    @Override
+    public void logout() throws SQLException{
+        playerId = DatabaseInterface.noPlayer;
+        database.disconnect();
     }
 }

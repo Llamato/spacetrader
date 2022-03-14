@@ -7,12 +7,14 @@ import java.sql.*;
 import java.util.*;
 
 public class DatabaseInterface{
-    private static final String singleplayer_prefix = "jdbc:sqlite:";
-    private static final String multiplayer_prefix = "jdbc:mariadb://";
-    private static final String multiplayer_postfix = ":3306/spacetrader";
+    private static final String singleplayerPrefix = "jdbc:sqlite:";
+    private static final String multiplayerPrefix = "jdbc:mariadb://";
+    private static final String multiplayerPostfix = ":3306/spacetrader";
 
     public static final boolean singleplayer = false;
     public static final boolean multiplayer = true;
+
+    public static final int noPlayer = 0;
 
     private Connection database;
 
@@ -21,7 +23,11 @@ public class DatabaseInterface{
     }
 
     public static DatabaseInterface connect(String path, boolean multiplayer) throws SQLException{
-         return multiplayer ? new DatabaseInterface(DriverManager.getConnection(multiplayer_prefix + path + multiplayer_postfix, "root", "")) : new DatabaseInterface(DriverManager.getConnection(singleplayer_prefix + path));
+         return multiplayer ? new DatabaseInterface(DriverManager.getConnection(multiplayerPrefix + path + multiplayerPostfix, "root", "")) : new DatabaseInterface(DriverManager.getConnection(singleplayerPrefix + path));
+    }
+
+    public void disconnect() throws SQLException{
+        database.close();
     }
 
     public Cargo[] getCargos() throws SQLException{
@@ -37,7 +43,8 @@ public class DatabaseInterface{
 
     public HashMap<Cargo, Integer> getCargoListByPortName(String portName) throws SQLException{
         HashMap<Cargo, Integer> cargoList = new HashMap<>();
-        ResultSet cargoListResult = database.createStatement().executeQuery("SELECT Items.Name,Items.Capacity, Items.BasePrice, PriceMultiplier FROM CargoLookup JOIN Items On Items.id = CargoLookup.CargoId JOIN Ports ON Ports.id = PortId WHERE Ports.Name = " + portName + ";");
+        String command = "SELECT Items.Name,Items.Capacity, Items.BasePrice, PriceMultiplier FROM CargoLookup JOIN Items On Items.id = CargoLookup.CargoId JOIN Ports ON Ports.id = PortId WHERE Ports.Name = '" + portName + "';";
+        ResultSet cargoListResult = database.createStatement().executeQuery(command);
         while(cargoListResult.next()){
             cargoList.put(new Cargo(cargoListResult.getString(1), cargoListResult.getInt(2), cargoListResult.getInt(3)), cargoListResult.getInt(4));
         }
@@ -55,8 +62,39 @@ public class DatabaseInterface{
         return ports.toArray(new Port[0]);
     }
 
-    public Player getPlayer() throws SQLException{
-        ResultSet playerTable = database.createStatement().executeQuery("SELECT Capital, Capacity, Consumption FROM Players, Ships WHERE Ships.id = Players.id;");
+    public int authenticate(String name, String password) throws SQLException{
+        String command = String.format("SELECT accounts.id FROM accounts, players WHERE accounts.id = players.id AND Name='%s' AND password='%s';", name, password);
+        ResultSet account = database.createStatement().executeQuery(command);
+        while(account.next()){
+            return account.getInt(1);
+        }
+        return noPlayer;
+    }
+
+    public int register(String name, String password) throws SQLException{
+        database.setAutoCommit(false);
+        String command = "INSERT INTO accounts(password) VALUES('" + password + "');";
+        PreparedStatement statement = database.prepareStatement(command, Statement.RETURN_GENERATED_KEYS);
+        statement.execute();
+        ResultSet keys = statement.getGeneratedKeys();
+        int accountId = 0;
+        while(keys.next()){
+            accountId = keys.getInt(1);
+        }
+        try{
+            command = String.format("INSERT INTO Players(id, Name) VALUES(%d,'%s');", accountId, name);
+            database.createStatement().execute(command);
+        }catch(SQLIntegrityConstraintViolationException e){
+            accountId = noPlayer;
+            return accountId;
+        }
+        command = String.format("INSERT INTO Ships(id, Capacity, Consumption) VALUES(%d,%d,%d);",accountId,30,1);
+        database.createStatement().execute(command);
+        database.commit();
+        return accountId;
+    }
+    public Player getPlayerById(int id) throws SQLException{
+        ResultSet playerTable = database.createStatement().executeQuery("SELECT Capital, Capacity, Consumption FROM Players, Ships WHERE Ships.id = Players.id AND Players.id = " + id + ";");
         Player player = new Player(new Ship(playerTable.getInt(2),playerTable.getInt(3)),playerTable.getInt(1));
         playerTable.close();
         return player;

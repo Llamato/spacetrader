@@ -1,12 +1,13 @@
 package com.cinua.spacetrader.view;
 
+import com.cinua.spacetrader.gamedata.MultiplayerGame;
+import com.cinua.spacetrader.gamedata.Savegame;
 import com.cinua.spacetrader.gamedata.SingleplayerGame;
-import com.cinua.spacetrader.database.DatabaseInterface;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Scanner;
 
 public class Console{
@@ -23,14 +24,6 @@ public class Console{
         return input("Please choose: ");
     }
 
-    private static void singleplayer(SingleplayerGame savegame){
-
-    }
-
-    private static void multiplayer(DatabaseInterface server){
-
-    }
-
     public static void main(String[] args){
         final String[] menuItems = {"Connect to multiplayer game","New game", "Load game", "Delete game", "Exit"};
         boolean invalidMenuItemSelected = true;
@@ -44,18 +37,35 @@ public class Console{
                 }catch(NumberFormatException e){
                     selectedIndex = Arrays.binarySearch(menuItems, selection);
                 }
+                Savegame game = null;
                 switch(selectedIndex){
                     case 0:
-                         multiplayer(DatabaseInterface.connect(input("Please enter the url of the server you would like to join "), DatabaseInterface.multiplayer));
+                        game = new MultiplayerGame(input("Please enter the url of the server you would like to join "));
+                        String username = input("Username? ");
+                        String password = input("Password? ");
+                        game.login(username, password);
+                        if(game.loggedIn()){
+                            System.out.println("Logged in "); //Debug!!!
+                        }else{
+                            System.out.println("Username or password wrong.");
+                            String response = input("Would you like to create an account with that name and password? [Yes/no] ").toLowerCase(Locale.ROOT);
+                            if(response.equals("no")){
+                                System.exit(0);
+                            }else if(response.equals("yes") || response.equals("y") || response.equals("")){
+                                game.create(username, password);
+                            }
+                        }
                         break;
                     case 1:
                         String name = input("Please enter a name for the new game ");
                         SingleplayerGame.newGame(name);
-                        singleplayer(SingleplayerGame.load(name));
+                        game = new SingleplayerGame(name);
+                        game.load();
                         break;
                     case 2:
                         Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator)+1)));
-                        singleplayer(SingleplayerGame.load(input("Please enter the name of the game you would like to load ")));
+                        game = new SingleplayerGame(input("Please enter the name of the game you would like to load "));
+                        game.load();
                         break;
                     case 3:
                         Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator)+1)));
@@ -65,6 +75,7 @@ public class Console{
                         System.exit(0);
                         break;
                 }
+                gameplayLoop(game);
             }catch(IOException e){
                 System.out.println("Could not create new game file.");
                 e.printStackTrace();
@@ -72,6 +83,16 @@ public class Console{
                 System.out.println("Could not load game file.");
                 e.printStackTrace();
             }
+        }
+    }
+    private static void gameplayLoop(Savegame game){
+        if(game == null){
+            return;
+        }
+        boolean gameRunning = true;
+        while(gameRunning){
+
+            gameRunning = false;
         }
     }
 }
