@@ -2,6 +2,7 @@ package com.cinua.spacetrader.database;
 import com.cinua.spacetrader.gameplay.Cargo;
 import com.cinua.spacetrader.gameplay.Player;
 import com.cinua.spacetrader.gameplay.Ship;
+import com.cinua.spacetrader.gameplay.planet.Market;
 import com.cinua.spacetrader.gameplay.planet.Port;
 import java.sql.*;
 import java.util.*;
@@ -34,31 +35,30 @@ public class DatabaseInterface{
 
     public Cargo[] getCargos() throws SQLException{
         ArrayList<Cargo> cargoList = new ArrayList<>();
-         ResultSet items = database.createStatement().executeQuery("SELECT Name,Capacity,BasePrice FROM Items;");
+         ResultSet items = database.createStatement().executeQuery("SELECT id, Name,Capacity,BasePrice FROM Items;");
          while(items.next()){
-             cargoList.add(new Cargo(items.getString(1),items.getInt(2),items.getInt(3)));
+             cargoList.add(new Cargo(items.getInt("id"), items.getString("Name"), items.getInt("Capacity"), items.getInt("BasePrice")));
       }
          items.close();
          return cargoList.toArray(new Cargo[0]);
     }
 
-
     public HashMap<Cargo, Integer> getCargoListByPortName(String portName) throws SQLException{
         HashMap<Cargo, Integer> cargoList = new HashMap<>();
-        String command = "SELECT Items.Name,Items.Capacity, Items.BasePrice, PriceMultiplier FROM CargoLookup JOIN Items On Items.id = CargoLookup.CargoId JOIN Ports ON Ports.id = PortId WHERE Ports.Name = '" + portName + "';";
+        String command = "SELECT Items.id, Name, Capacity, BasePrice, PriceMultiplier FROM pricemultiplierlookup JOIN Items On Items.id = CargoLookup.CargoId JOIN Ports ON Ports.id = PortId WHERE Ports.Name = '" + portName + "';";
         ResultSet cargoListResult = database.createStatement().executeQuery(command);
         while(cargoListResult.next()){
-            cargoList.put(new Cargo(cargoListResult.getString(1), cargoListResult.getInt(2), cargoListResult.getInt(3)), cargoListResult.getInt(4));
+            cargoList.put(new Cargo(cargoListResult.getInt("id"), cargoListResult.getString("Name"), cargoListResult.getInt("Capacity"), cargoListResult.getInt("BasePrice")), cargoListResult.getInt("PriceMultiplier"));
         }
         cargoListResult.close();
         return cargoList;
     }
 
     public Port[] getPorts() throws SQLException{
-       ResultSet portsTable = database.createStatement().executeQuery("SELECT Name, x, y FROM Ports;");
+       ResultSet portsTable = database.createStatement().executeQuery("SELECT id, Name, x, y FROM Ports;");
         ArrayList<Port> ports = new ArrayList<>();
        while(portsTable.next()){
-            ports.add(new Port(portsTable.getString(1), new Vector<>(Arrays.asList(portsTable.getInt(2), portsTable.getInt(3))), getCargoListByPortName(portsTable.getString(1))));
+            ports.add(new Port(portsTable.getInt("id"), portsTable.getString("Name"), new Vector<>(Arrays.asList(portsTable.getInt("x"), portsTable.getInt("y"))), new Market(null, getCargoListByPortName(portsTable.getString("Name"))))); //Temporary!
        }
         portsTable.close();
         return ports.toArray(new Port[0]);
@@ -98,10 +98,11 @@ public class DatabaseInterface{
     }
 
     public Player getPlayerById(int id) throws SQLException{
-        ResultSet playerTable = database.createStatement().executeQuery("SELECT Capital, Capacity, Consumption FROM Players, Ships WHERE Ships.id = Players.id AND Players.id = " + id + ";");
+        String command = "SELECT Ships.id, Capital, Capacity, Consumption, x, y FROM Players, Ships WHERE Ships.id = Players.id AND Players.id = " + id + ";";
+        ResultSet playerTable = database.createStatement().executeQuery(command);
         Player player = null;
         playerTable.next();
-        player = new Player(new Ship(playerTable.getInt(2), playerTable.getInt(3)), playerTable.getInt(1));
+        player = new Player(new Ship(playerTable.getInt("id"), playerTable.getInt("Capacity"), playerTable.getInt("Consumption"), new Vector<>(Arrays.asList(playerTable.getInt("x"), playerTable.getInt("y")))), playerTable.getInt("Capital"));
         playerTable.close();
         return player;
     }
@@ -133,5 +134,34 @@ public class DatabaseInterface{
             database.createStatement().execute(command);
         }
         database.commit();
+    }
+
+    //Actual gameplay functions
+    public boolean buyItemInPort(Player buyer, Cargo item, Port seller) throws SQLException{
+        Ship ship = buyer.getShip();
+        Market market = seller.getMarket();
+        if(!(ship.getPosition() != seller.getPosition() || ship.getRemainingCapacity() < item.getWeight() || market.getStockByItem(item) <= Market.itemNotInStock || buyer.getCapital() < market.getPriceForItemInStock(item))){
+            String command = "INSERT INTO TRUNK(Name,stock,capacity) VALUES " + String.format("('%s',&d,&d);");
+            database.setAutoCommit(false);
+            database.createStatement().execute(command);
+        }
+        return false;
+    }
+
+    public boolean travelToPort(Ship vessel, Port destination) throws SQLException{
+        Vector<Integer> vesselPosition = vessel.getPosition();
+        Vector<Integer> destinationPosition = destination.getPosition();
+        int distance = Port.getDistanceBetween(vesselPosition, destinationPosition);
+        if(vessel.getRange() < distance){
+           return false;
+        }
+        vessel.travelTo(destination);
+        String command = String.format("UPDATE trunk SET Quantity=%d WHERE ItemId=%d AND ShipId=%d;", vessel.getFuelRemaining(), Cargo.fuelId, vessel.getId());
+        database.setAutoCommit(false);
+        database.createStatement().executeUpdate(command);
+        command = String.format("UPDATE ships SET x=%d,y=%d WHERE id=%d;", destinationPosition.get(0), destinationPosition.get(1), vessel.getId());
+        database.createStatement().executeUpdate(command);
+        database.commit();
+        return true;
     }
 }

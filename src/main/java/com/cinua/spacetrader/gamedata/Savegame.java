@@ -12,7 +12,7 @@ public  abstract class Savegame{
     protected int playerId = DatabaseInterface.noPlayer;
 
     protected DatabaseInterface database;
-    protected GameData data;
+    public GameData data;
     protected String gameLocation;
 
     public Savegame(String gameLocation){

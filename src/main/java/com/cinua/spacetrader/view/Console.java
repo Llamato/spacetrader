@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Scanner;
+import com.cinua.spacetrader.gameplay.gameLoop;
 
 public class Console{
 
@@ -38,7 +39,7 @@ public class Console{
                     selectedIndex = Arrays.binarySearch(menuItems, selection);
                 }
                 Savegame game = null;
-                switch (selectedIndex) {
+                switch (selectedIndex){
                     case 0 -> {
                         game = new MultiplayerGame(input("Please enter the url of the server you would like to join "));
                         String username = input("Username? ");
@@ -47,7 +48,7 @@ public class Console{
                         if (game.loggedIn()) {
                             System.out.println("Logged in"); //Debug!!!
                             game.load();
-                        } else {
+                        }else{
                             System.out.println("Username or password wrong.");
                             String response = input("Would you like to create an account with that name and password? [Yes/no] ").toLowerCase(Locale.ROOT);
                             if (response.equals("no")) {
@@ -74,7 +75,7 @@ public class Console{
                     }
                     case 4 -> System.exit(0);
                 }
-                gameplayLoop(game);
+                gameLoop.loop(game);
             }catch(IOException e){
                 System.out.println("Could not create new game file.");
                 e.printStackTrace();
@@ -82,16 +83,6 @@ public class Console{
                 System.out.println("Could not load game file.");
                 e.printStackTrace();
             }
-        }
-    }
-    private static void gameplayLoop(Savegame game){
-        if(game == null){
-            return;
-        }
-        boolean gameRunning = true;
-        while(gameRunning){
-
-            gameRunning = false;
         }
     }
 }

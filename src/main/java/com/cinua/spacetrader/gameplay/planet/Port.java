@@ -1,18 +1,18 @@
 package com.cinua.spacetrader.gameplay.planet;
-import com.cinua.spacetrader.gameplay.Cargo;
-import java.util.HashMap;
+import com.cinua.spacetrader.database.DatabaseObject;
 import java.util.Vector;
 
-public class Port{
+public class  Port extends DatabaseObject{
     private String name;
     private Vector<Integer> position;
     public static final int prohibited = -1;
-    private HashMap<Cargo, Integer> cargoLookup; //<Cargo,Price Multiplier>
+    private Market market;
 
-    public Port(String modelName, Vector<Integer> modelPosition, HashMap<Cargo, Integer> modelCargoList){
+    public Port(int id, String modelName, Vector<Integer> modelPosition, Market market){
+        super(id);
         name = modelName;
         position = modelPosition;
-        cargoLookup = modelCargoList;
+        this.market = market;
 
     }
     public String getName(){
@@ -23,8 +23,12 @@ public class Port{
         return position;
     }
 
-    public HashMap<Cargo, Integer> getCargoLookup(){
-        return cargoLookup;
+    public Market getMarket(){
+        return market;
+    }
+
+    public static int getDistanceBetween(Vector<Integer> origin, Vector<Integer> destination){
+        return Math.abs(Math.abs(destination.get(0) - origin.get(0)) + Math.abs(destination.get(0) - origin.get(0)));
     }
 
     public int getDistanceTo(Port destination){
