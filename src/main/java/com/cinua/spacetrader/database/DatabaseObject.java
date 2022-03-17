@@ -1,8 +1,9 @@
 package com.cinua.spacetrader.database;
 
 public class DatabaseObject{
-    private int id;
-    public DatabaseObject(int id){
+    protected int id;
+
+    protected DatabaseObject(int id){
         this.id = id;
     }
 

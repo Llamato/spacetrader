@@ -55,6 +55,7 @@ public class SingleplayerGame extends Savegame{
             newGame(gameLocation);
             database = DatabaseInterface.connect(gameLocation, DatabaseInterface.singleplayer);
     }
+
     public void login(String name, String password) throws SQLException{
         if(database == null)
             database = DatabaseInterface.connect(gameLocation, DatabaseInterface.singleplayer);

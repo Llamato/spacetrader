@@ -1,12 +1,7 @@
 package com.cinua.spacetrader.gamedata;
 import com.cinua.spacetrader.gameplay.Cargo;
 import com.cinua.spacetrader.gameplay.Player;
-import com.cinua.spacetrader.gameplay.Ship;
-import com.cinua.spacetrader.gameplay.planet.Market;
-import com.cinua.spacetrader.gameplay.planet.Port;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Vector;
+import com.cinua.spacetrader.gameplay.Port;
 
 public class GameData{
     public Cargo[] items;

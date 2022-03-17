@@ -1,8 +1,6 @@
 package com.cinua.spacetrader.gameplay;
 import com.cinua.spacetrader.database.DatabaseObject;
-import com.cinua.spacetrader.gameplay.planet.Port;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;

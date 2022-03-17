@@ -1,18 +1,12 @@
 package com.cinua.spacetrader.view;
-import com.cinua.spacetrader.gamedata.GameData;
 import com.cinua.spacetrader.database.DatabaseInterface;
-import com.cinua.spacetrader.gamedata.Savegame;
-import com.cinua.spacetrader.gamedata.SingleplayerGame;
 import com.cinua.spacetrader.gameplay.Player;
 import com.cinua.spacetrader.gameplay.Ship;
-import com.cinua.spacetrader.gameplay.planet.Market;
 import com.glabs.tables.SimpleTable;
 import com.cinua.spacetrader.gameplay.Cargo;
-import com.cinua.spacetrader.gameplay.planet.Port;
+import com.cinua.spacetrader.gameplay.Port;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.Vector;
 
 public class Tests{
@@ -21,13 +15,13 @@ public class Tests{
     static SimpleTable getPortTable(Port[] ports) {
         SimpleTable table = new SimpleTable(3 + ports.length, new String[]{"Ware", "Preis multiplier", "Basispreis"});
         Arrays.stream(ports).map(Port::getName).forEach(table::append);
-        Cargo[] cargos = Arrays.stream(ports).map(Port::getMarket).map(Market::getItemsInStock).flatMap(Arrays::stream).distinct().toArray(Cargo[]::new);
+        Cargo[] cargos = Arrays.stream(ports).map(Port::getItemsInStock).flatMap(Arrays::stream).distinct().toArray(Cargo[]::new);
         for(Cargo cargo : cargos){
             table.append(cargo.getName());
             table.append(cargo.getWeight());
             table.append(cargo.getBasePrice());
             for(Port port : ports){
-                int priceMultiplier = port.getMarket().getPriceForItemInStock(cargo);
+                int priceMultiplier = port.getPriceForItemInStock(cargo);
                 table.append(priceMultiplier == Port.prohibited ? "Verboten" : priceMultiplier);
             }
         }

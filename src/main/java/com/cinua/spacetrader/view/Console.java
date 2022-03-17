@@ -8,15 +8,10 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Scanner;
-import com.cinua.spacetrader.gameplay.gameLoop;
+import com.cinua.spacetrader.gameplay.GameLoop;
+import static com.cinua.spacetrader.view.ConsoleView.input;
 
 public class Console{
-
-    private static String input(String prompt){
-        System.out.print(prompt);
-        return new Scanner(System.in).nextLine();
-    }
 
     private static String mainMenu(String[] menuItems){
         for(int index = 1; index <= menuItems.length; index++){
@@ -75,7 +70,7 @@ public class Console{
                     }
                     case 4 -> System.exit(0);
                 }
-                gameLoop.loop(game);
+                GameLoop.start(game, new ConsoleView());
             }catch(IOException e){
                 System.out.println("Could not create new game file.");
                 e.printStackTrace();

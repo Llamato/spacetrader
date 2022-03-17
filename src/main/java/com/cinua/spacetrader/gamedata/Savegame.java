@@ -3,7 +3,7 @@ package com.cinua.spacetrader.gamedata;
 import com.cinua.spacetrader.database.DatabaseInterface;
 import com.cinua.spacetrader.gameplay.Cargo;
 import com.cinua.spacetrader.gameplay.Player;
-import com.cinua.spacetrader.gameplay.planet.Port;
+import com.cinua.spacetrader.gameplay.Port;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
