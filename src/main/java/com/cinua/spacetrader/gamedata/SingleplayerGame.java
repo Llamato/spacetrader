@@ -6,12 +6,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Random;
 
 public class SingleplayerGame extends Savegame{
     private static final String savesPath = "saves";
     private static final String newGameTemplatePath = "template";
     private static final String saveFileExtension = ".sqlite";
     private static final String identifierName = "identifier.sqlite";
+    private static final int minimumItemsInWorld = 100;
+    private static final int maximumItemsInWorld = 10000;
 
     private static String getDatabasePathFromSavegameName(String name){
         return savesPath + File.separator + name + File.separator + name + saveFileExtension;
@@ -54,6 +57,7 @@ public class SingleplayerGame extends Savegame{
     public void create(String name, String password) throws SQLException, IOException{
             newGame(gameLocation);
             database = DatabaseInterface.connect(gameLocation, DatabaseInterface.singleplayer);
+            database.populatePorts(this, new Random().nextInt(minimumItemsInWorld, maximumItemsInWorld));
     }
 
     public void login(String name, String password) throws SQLException{

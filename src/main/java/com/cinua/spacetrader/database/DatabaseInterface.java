@@ -1,4 +1,5 @@
 package com.cinua.spacetrader.database;
+import com.cinua.spacetrader.gamedata.Savegame;
 import com.cinua.spacetrader.gameplay.Cargo;
 import com.cinua.spacetrader.gameplay.Player;
 import com.cinua.spacetrader.gameplay.Ship;
@@ -66,7 +67,7 @@ public class DatabaseInterface{
 
     public HashMap<Cargo, Integer> getCargoStockByPortId(int id) throws SQLException{
         HashMap<Cargo, Integer> cargoList = new HashMap<>();
-        String command = String.format("SELECT id, Items.Name, Capacity, BasePrice FROM Items LEFT JOIN stocklookup ON id = ItemId WHERE PortId = %d;", id);
+        String command = String.format("SELECT id, Items.Name, Capacity, BasePrice, Quantity FROM Items LEFT JOIN stocklookup ON id = ItemId WHERE PortId = %d;", id);
         ResultSet cargoListResult = database.createStatement().executeQuery(command);
         while(cargoListResult.next()){
             cargoList.put(new Cargo(cargoListResult.getInt("id"), cargoListResult.getString("Name"), cargoListResult.getInt("Capacity"), cargoListResult.getInt("BasePrice")), cargoListResult.getInt("Quantity"));
@@ -146,7 +147,7 @@ public class DatabaseInterface{
         database.commit();
     }
 
-    public void setCargos(Cargo[] cargos) throws SQLException{ // Not to be used in production.
+    public void setCargos(Cargo[] cargos) throws SQLException{ //Not to be used in production.
         database.setAutoCommit(false);
         database.createStatement().execute("DELETE FROM Items");
         for(Cargo Table : cargos){
@@ -157,6 +158,43 @@ public class DatabaseInterface{
     }
 
     //Actual gameplay functions
+    public void populatePorts(Savegame world, int itemsInWorld) throws SQLException{ //Soon to be singleplayer only.
+        String command = String.format("SELECT PortId, CargoId, PriceMultiplier FROM pricemultiplierlookup WHERE PriceMultiplier > %d;", Port.prohibited);
+        ResultSet allowedCombinations = database.createStatement().executeQuery(command);
+        int allowedCombinationsCount = 0;
+        ArrayList<Integer> portIds = new ArrayList<>();
+        ArrayList<Integer> cargoIds = new ArrayList<>();
+        while(allowedCombinations.next()){
+            portIds.add(allowedCombinations.getInt(1));
+            cargoIds.add(allowedCombinations.getInt(2));
+            allowedCombinationsCount++;
+        }
+        database.setAutoCommit(false);
+        Random random = new Random();
+        ArrayList<Integer> usedPortIds = new ArrayList<>();
+        ArrayList<Integer> usedCargoIds = new ArrayList<>();
+        for(int currentItem = 0; currentItem < itemsInWorld; currentItem++){
+            int result = random.nextInt(0,allowedCombinationsCount);
+            int portId = portIds.get(result);
+            int cargoId = cargoIds.get(result);
+            int quantity = 0;
+            for(int currentCombination = 0; currentCombination < usedCargoIds.size(); currentCombination++){
+                if(usedPortIds.get(currentCombination) == portId && usedCargoIds.get(currentCombination) == cargoId){
+                    quantity++;
+                }
+            }
+            if(quantity == 0){
+                command = String.format("INSERT INTO stocklookup(ItemId, PortId, Quantity) VALUES(%d, %d, %d);", portId, cargoId, 1);
+            }else{
+                command = String.format("UPDATE stocklookup SET Quantity=Quantity+1 WHERE PortId=%d AND ItemId=%d;", portId, cargoId);
+            }
+            database.createStatement().execute(command);
+            usedPortIds.add(portId);
+            usedCargoIds.add(cargoId);
+        }
+        database.commit();
+    }
+
     public boolean buyItemInPort(Player buyer, Cargo item, Port seller) throws SQLException{ //Something is wrong here, Ousan.
         Ship ship = buyer.getShip();
         if(!(ship.getPosition() != seller.getPosition() || ship.getRemainingCapacity() < item.getWeight() || seller.getStockByItem(item) <= Port.itemNotInStock || buyer.getCapital() < seller.getPriceForItemInStock(item))){

@@ -8,6 +8,13 @@ public class GameLoop{
     public static final int invalidSavegame = 1;
     public static final int invalidView = 2;
 
+    private static final int winPort = Port.TrierId;
+    private static final int winCapital = 100;
+
+    private static boolean hasWon(Savegame gamedata){
+        return gamedata.data.player.getShip().getPosition() == gamedata.data.ports[winPort].getPosition() && gamedata.data.player.getCapital() >= winCapital;
+    }
+
     public static int start(Savegame gameData, GameView gameView){
         if(gameData == null){
             return invalidSavegame;

@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Vector;
 
 public class  Port extends DatabaseObject{
+    public static final int TortugaId = 1;
+    public static final int TrierId = 2;
     private String name;
     private Vector<Integer> position;
     public static final int prohibited = -1;

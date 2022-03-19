@@ -54,9 +54,10 @@ public class Console{
                         }
                     }
                     case 1 -> {
-                        String name = input("Please enter a name for the new game ");
-                        game = new SingleplayerGame(name);
+                        game = new SingleplayerGame(input("Please enter a name for the new game "));
                         game.create("", "");
+                        game.login("","");
+                        game.load();
                     }
                     case 2 -> {
                         Arrays.stream(SingleplayerGame.getSavegamesList()).forEach(savegame -> System.out.println(savegame.substring(savegame.lastIndexOf(File.separator) + 1)));
